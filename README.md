@@ -10,12 +10,6 @@ Trend Finder collects and analyzes posts from key influencers, then saves trends
 
 _Spend less time hunting for trends and more time creating impactful campaigns._
 
-## Watch the Demo & Tutorial video
-
-[![Thumbnail](https://i.ytimg.com/vi/puimQSun92g/hqdefault.jpg)](https://www.youtube.com/watch?v=puimQSun92g)
-
-Learn how to set up Trend Finder and start monitoring trends in this video!
-
 ## How it Works
 
 1. **Data Collection** 📥
