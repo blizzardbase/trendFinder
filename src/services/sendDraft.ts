@@ -14,19 +14,7 @@ function truncateForNotion(text: string | undefined, maxLength = 2000): string {
 }
 
 /**
- * Parse a date string to YYYY-MM-DD or return today.
- */
-function toISODate(value: string | undefined): string {
-  if (!value || String(value).trim() === "") {
-    return new Date().toISOString().slice(0, 10);
-  }
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return new Date().toISOString().slice(0, 10);
-  return d.toISOString().slice(0, 10);
-}
-
-/**
- * Write trend items to the configured Notion database as one row per item.
+ * Write consolidated trend items to the configured Notion database as one row per trend.
  */
 export async function sendDraft(items: TrendItem[]): Promise<string> {
   const apiKey = process.env.NOTION_API_KEY;
@@ -44,12 +32,16 @@ export async function sendDraft(items: TrendItem[]): Promise<string> {
     return `No trend items to write to Notion at ${new Date().toISOString()}`;
   }
 
+  const dateValue = new Date().toISOString().slice(0, 10);
+
   for (const item of items) {
-    const title = truncateForNotion(item.headline ?? item.description, 2000);
-    const link = item.story_or_tweet_link ?? item.link ?? "";
-    const description = truncateForNotion(item.description ?? item.headline);
-    const dateValue = toISODate(item.date_posted);
-    const source = item.source ? truncateForNotion(item.source, 100) : undefined;
+    const title = truncateForNotion(item.trend_name, 2000);
+    const description = truncateForNotion(item.description);
+    const reasoning = truncateForNotion(item.reasoning);
+    const sourcesText = truncateForNotion(
+      Array.isArray(item.sources) ? item.sources.join(", ") : String(item.sources ?? ""),
+    );
+    const category = item.category ? truncateForNotion(item.category, 100) : undefined;
 
     await notion.pages.create({
       parent: { database_id: databaseId },
@@ -57,15 +49,20 @@ export async function sendDraft(items: TrendItem[]): Promise<string> {
         Title: {
           title: [{ text: { content: title } }],
         },
-        ...(link ? { Link: { url: link } } : {}),
         Description: {
           rich_text: [{ text: { content: description } }],
+        },
+        Reasoning: {
+          rich_text: [{ text: { content: reasoning } }],
+        },
+        Sources: {
+          rich_text: [{ text: { content: sourcesText } }],
         },
         Date: {
           date: { start: dateValue },
         },
-        ...(source !== undefined && source !== "—"
-          ? { Source: { select: { name: source } } }
+        ...(category !== undefined && category !== "—"
+          ? { Category: { select: { name: category } } }
           : {}),
       } as Parameters<typeof notion.pages.create>[0]["properties"],
     });

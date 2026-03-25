@@ -1,5 +1,4 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
-import OpenAI from "openai";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -12,8 +11,8 @@ const MARKDOWN_TRUNCATE_LENGTH = 3000;
 type GrokTweet = { text?: string; link?: string; username?: string };
 
 /**
- * Fetch recent tweets for a user via xAI Grok API.
- * Returns a markdown section string for the combined output.
+ * Fetch recent tweets for a user via xAI Grok Responses API with x_search.
+ * Uses grok-4 model which supports live X search.
  */
 async function getTweetsViaGrok(username: string): Promise<string> {
   const apiKey = process.env.XAI_API_KEY;
@@ -22,20 +21,54 @@ async function getTweetsViaGrok(username: string): Promise<string> {
     return "";
   }
 
-  const client = new OpenAI({
-    apiKey,
-    baseURL: "https://api.x.ai/v1",
-  });
+  const today = new Date().toISOString().split("T")[0];
+  const threeDaysAgo = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString().split("T")[0];
 
-  const prompt = `List the most recent tweets from @${username} about AI, tech, or coding from the last 24 hours. For each tweet, provide the text and a direct link to the tweet. Return as JSON with format: {"tweets": [{"text": "...", "link": "https://x.com/...", "username": "${username}"}]}. If there are no matching tweets, return {"tweets": []}. Return only valid JSON, no markdown or extra text.`;
+  const prompt = `List the most recent tweets from @${username} about AI, tech, or coding from the last 72 hours. For each tweet, provide the text and a direct link to the tweet. Return as JSON with format: {"tweets": [{"text": "...", "link": "https://x.com/...", "username": "${username}"}]}. If there are no matching tweets, return {"tweets": []}. Return only valid JSON, no markdown or extra text.`;
 
   try {
-    const completion = await client.chat.completions.create({
-      model: "grok-3-mini-fast",
-      messages: [{ role: "user", content: prompt }],
+    const res = await fetch("https://api.x.ai/v1/responses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "grok-4",
+        input: prompt,
+        tools: [
+          {
+            type: "x_search",
+            x_search: {
+              allowed_x_handles: [username],
+              from_date: threeDaysAgo,
+              to_date: today,
+            },
+          },
+        ],
+      }),
     });
 
-    const raw = completion.choices[0]?.message?.content;
+    if (!res.ok) {
+      const errBody = await res.text();
+      console.error(`Grok API error for @${username}: ${res.status} ${errBody}`);
+      return "";
+    }
+
+    const data = await res.json() as {
+      output?: Array<{ content?: Array<{ type?: string; text?: string }> }>;
+    };
+
+    // Extract the text output from the response
+    let raw = "";
+    for (const item of data.output ?? []) {
+      for (const block of item.content ?? []) {
+        if (block.type === "output_text" && block.text) {
+          raw = block.text;
+        }
+      }
+    }
+
     if (!raw) {
       console.error(`No response from Grok for @${username}.`);
       return "";

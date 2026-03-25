@@ -1,11 +1,10 @@
 /**
- * One trend item from the LLM output, used for Notion database rows.
+ * A consolidated trend identified across multiple sources, used for Notion database rows.
  */
 export interface TrendItem {
-  description?: string;
-  headline?: string;
-  story_or_tweet_link?: string;
-  link?: string;
-  date_posted?: string;
-  source?: string;
+  trend_name: string;
+  description: string;
+  reasoning: string;
+  sources: string[];
+  category?: string;
 }

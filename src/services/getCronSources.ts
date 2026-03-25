@@ -21,23 +21,28 @@ export async function getCronSources(): Promise<{ identifier: string }[]> {
           { identifier: "https://openai.com/news/" },
           { identifier: "https://www.anthropic.com/news" },
           { identifier: "https://news.ycombinator.com/" },
-          {
-            identifier:
-              "https://www.reuters.com/technology/artificial-intelligence/",
-          },
+          { identifier: "https://www.reuters.com/technology/artificial-intelligence/" },
           { identifier: "https://simonwillison.net/" },
           { identifier: "https://buttondown.com/ainews/archive/" },
+          { identifier: "https://anthropic.com/research" },
+          { identifier: "https://deepmind.google/research" },
+          { identifier: "https://ai.meta.com/blog" },
+          { identifier: "https://old.reddit.com/r/MachineLearning/" },
+          { identifier: "https://old.reddit.com/r/LocalLLaMA/" },
         ]
       : [];
 
     const xProfileSources: { identifier: string }[] = hasXaiKey
       ? [
-          { identifier: "https://x.com/steipete" },
           { identifier: "https://x.com/karpathy" },
-          { identifier: "https://x.com/bcherny" },
-          { identifier: "https://x.com/iamtrask" },
+          { identifier: "https://x.com/ylecun" },
+          { identifier: "https://x.com/ilyasut" },
+          { identifier: "https://x.com/fchollet" },
+          { identifier: "https://x.com/rasbt" },
+          { identifier: "https://x.com/natolambert" },
+          { identifier: "https://x.com/simonw" },
+          { identifier: "https://x.com/GoogleResearch" },
           { identifier: "https://x.com/claudeai" },
-          { identifier: "https://x.com/OpenAI" },
           { identifier: "https://x.com/theo" },
         ]
       : [];
