@@ -1,100 +1,85 @@
 # TrendFinder
 
-**Automated AI/LLM trend aggregator that scrapes news sources and X profiles, analyzes them with AI, and saves structured trends to a Notion database.**
+**Automated AI trend aggregator that scrapes 22 sources across the web, Reddit, and X, identifies consolidated trends using AI, and saves them to a Notion database with reasoning and evidence.**
+
+Unlike a simple news feed, TrendFinder doesn't just list individual stories. It reads everything together and identifies **emerging themes** that appear across multiple sources — so you see the signal, not the noise.
 
 ---
 
 ## How it works
 
-### 1. Data collection
+### 1. Data collection (22 sources)
 
-- **Web sources (Firecrawl)**  
-  7 news/blog sites are scraped via Firecrawl `scrapeUrl()` (markdown only, no Firecrawl LLM):
-  - `https://www.firecrawl.dev/blog`
-  - `https://openai.com/news/`
-  - `https://www.anthropic.com/news`
-  - `https://news.ycombinator.com/`
-  - `https://www.reuters.com/technology/artificial-intelligence/`
-  - `https://simonwillison.net/`
-  - `https://buttondown.com/ainews/archive/`
+- **Web sources (Firecrawl)** — 10 news/blog/research sites scraped as markdown:
+  - `firecrawl.dev/blog`, `openai.com/news`, `anthropic.com/news`, `anthropic.com/research`
+  - `news.ycombinator.com`, `reuters.com/technology/artificial-intelligence`
+  - `simonwillison.net`, `buttondown.com/ainews/archive`
+  - `deepmind.google/research`, `ai.meta.com/blog`
 
-- **X profiles (xAI Grok)**  
-  7 X accounts are queried via the xAI Grok API (`grok-3-mini-fast`) using an OpenAI‑compatible client:
-  - `https://x.com/steipete`
-  - `https://x.com/karpathy`
-  - `https://x.com/bcherny`
-  - `https://x.com/iamtrask`
-  - `https://x.com/claudeai`
-  - `https://x.com/OpenAI`
-  - `https://x.com/theo`
+- **Reddit (Firecrawl)** — 2 subreddits scraped via `old.reddit.com`:
+  - `r/MachineLearning`, `r/LocalLLaMA`
 
-  For each profile, Grok is prompted to return recent AI/tech/coding tweets from the last 24 hours in JSON, which is then formatted into markdown.
+- **X profiles (xAI Grok)** — 10 accounts queried via the xAI Grok-4 Responses API with live `x_search` (72-hour window):
+  - `@karpathy`, `@ylecun`, `@ilyasut`, `@fchollet`, `@rasbt`
+  - `@natolambert`, `@simonw`, `@GoogleResearch`, `@claudeai`, `@theo`
 
-- All Firecrawl markdown and Grok tweet sections are concatenated into **one combined markdown string**.
+All scraped content is combined into one markdown string for analysis.
 
-### 2. AI analysis (OpenRouter / Kimi K2.5)
+### 2. Trend consolidation (DeepSeek V3.2 via OpenRouter)
 
-- The combined markdown is sent to **OpenRouter** using the **Kimi K2.5** model.
-- Kimi:
-  - Extracts AI/LLM/tech trends (stories and tweets),
-  - Normalizes them into structured JSON (e.g. description + link + optional metadata),
-  - Produces a human‑readable draft summary plus structured items.
+The combined content is sent to **DeepSeek V3.2** via OpenRouter. The model:
+- Reads all sources together
+- Identifies **emerging trends** that appear across 2+ sources
+- Provides reasoning and evidence for each trend
+- Categorizes trends (Security, AI Models, Tool Launches, Industry Shifts, Developer Experience, Open Source)
+- Aims for 3-7 quality trends per run
 
-### 3. Persistence (Notion database)
+### 3. Notion database
 
-- The structured trend items are written to a Notion database via the Notion API.
-- Each row represents a **single trend item** with:
-  - **Title**: headline or short description
-  - **Link**: URL to the story or tweet
-  - **Description**: fuller summary
-  - **Date**: when it was posted / collected
-  - **Source**: origin (e.g. `HN`, `OpenAI blog`, `@karpathy`)
+Each consolidated trend is saved as one row with:
+- **Title** — trend name
+- **Description** — what the trend is and why it matters
+- **Reasoning** — evidence from the sources that led to identification
+- **Sources** — which URLs/profiles contributed
+- **Category** — trend category
+- **Date** — date of analysis
+
+---
+
+## Run cadence
+
+**Recommended: once every 3 days.**
+
+- Web/Reddit sources need 2-3 days to accumulate fresh content
+- X profiles use a 72-hour tweet window that aligns with this cadence
+- Running more frequently produces repetitive results
 
 ---
 
 ## Required API keys
 
-You must create a `.env` file (see setup below) with the following keys:
+Create a `.env` file (see setup below) with:
 
-- **`OPENROUTER_API_KEY`** – from [`https://openrouter.ai`](https://openrouter.ai)  
-  - Used by Kimi K2.5 via OpenRouter for trend analysis and extraction.
-
-- **`FIRECRAWL_API_KEY`** – from [`https://www.firecrawl.dev`](https://www.firecrawl.dev)  
-  - Used to scrape the 7 news/blog sources as markdown.
-
-- **`XAI_API_KEY`** – from [`https://console.x.ai`](https://console.x.ai)  
-  - Used to call xAI’s Grok API (`grok-3-mini-fast`) for recent tweets from the 7 X profiles.
-
-- **`NOTION_API_KEY`** – from [`https://www.notion.so/my-integrations`](https://www.notion.so/my-integrations)  
-  - Notion integration token used to create pages in your database.
-
-- **`NOTION_DATABASE_ID`**  
-  - The 32‑character database ID from your Notion database URL, e.g. in  
-    `https://www.notion.so/workspace/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?v=...`
-
-No Slack, Discord, Together AI, or OpenAI keys are required; those integrations have been removed or replaced.
+- **`OPENROUTER_API_KEY`** — from [openrouter.ai](https://openrouter.ai). Used by DeepSeek V3.2 for trend consolidation.
+- **`FIRECRAWL_API_KEY`** — from [firecrawl.dev](https://www.firecrawl.dev). Used to scrape web and Reddit sources.
+- **`XAI_API_KEY`** — from [console.x.ai](https://console.x.ai). Used for Grok-4 with live X search.
+- **`NOTION_API_KEY`** — from [notion.so/my-integrations](https://www.notion.so/my-integrations). Notion integration token.
+- **`NOTION_DATABASE_ID`** — the 32-character ID from your Notion database URL.
 
 ---
 
 ## Notion database setup
 
-Create a Notion database (table view is easiest) with **exactly** these properties:
+Create a Notion database (table view) with these properties:
 
-- **Title** (type: `title`)  
-  - The main title of the row; used for the trend headline.
-
-- **Link** (type: `url`)  
-  - Direct link to the story or tweet (e.g. blog post URL or `https://x.com/...`).
-
-- **Description** (type: `rich_text`)  
-  - Short summary or explanation of why this item is interesting.
-
-- **Date** (type: `date`)  
-  - Date the story/tweet was posted or the date the trend was collected (the app will fill this with an ISO date like `YYYY-MM-DD`).
-
-- **Source** (type: `select`)  
-  - Optional; use values like `HN`, `OpenAI`, `Anthropic`, `@karpathy`, etc.  
-  - The app will create select options on the fly if they don’t yet exist.
+| Property | Type | Description |
+|----------|------|-------------|
+| Title | title | Trend name |
+| Description | rich_text | What the trend is and why it matters |
+| Reasoning | rich_text | Evidence from sources |
+| Sources | rich_text | Contributing URLs/profiles |
+| Category | select | Security, AI Models, Tool Launches, Industry Shifts, Developer Experience, Open Source, Other |
+| Date | date | Date of analysis (auto-filled) |
 
 ---
 
@@ -110,13 +95,11 @@ npm install
 
 ### 2. Configure environment variables
 
-Copy `.env.example` to `.env` and fill in your keys:
-
 ```bash
 cp .env.example .env
 ```
 
-Then edit `.env` and set:
+Edit `.env` and add your keys:
 
 ```bash
 OPENROUTER_API_KEY=your_openrouter_api_key_here
@@ -128,43 +111,33 @@ NOTION_DATABASE_ID=your_notion_database_id_here
 
 ### 3. Run the pipeline
 
-Run a single end-to-end cycle:
-
 ```bash
 npm run run
 ```
 
-This will:
+This will scrape all 22 sources, identify consolidated trends, and write them to your Notion database.
 
-- Scrape the 7 web sources via Firecrawl,
-- Fetch recent tweets from the 7 X profiles via Grok,
-- Analyze everything with Kimi K2.5 via OpenRouter,
-- Write one row per trend item into your Notion database.
-
-You can also use:
+For development with auto-restart:
 
 ```bash
 npm run start
 ```
-
-to run the entrypoint under `nodemon` for development (auto‑restart on file changes).
 
 ---
 
 ## Tech stack
 
 - **Language**: TypeScript (Node.js)
-- **Web scraping**: Firecrawl (`@mendable/firecrawl-js`) with `scrapeUrl()`
-- **Trend analysis**: OpenRouter (Kimi K2.5)
-- **X profile fetch**: xAI Grok (`grok-3-mini-fast`) via OpenAI‑compatible client
+- **Web scraping**: Firecrawl (`@mendable/firecrawl-js`)
+- **X profile search**: xAI Grok-4 Responses API with `x_search`
+- **Trend analysis**: DeepSeek V3.2 via OpenRouter
 - **Storage**: Notion API (`@notionhq/client`)
 
 ---
 
 ## Credits and license
 
-- **Original project**: [`ericciarla/trendFinder`](https://github.com/ericciarla/trendFinder) (MIT license)  
-- **This fork**: major changes to use OpenRouter (Kimi K2.5), Notion, Firecrawl `scrapeUrl`, and xAI Grok for X profiles, while preserving the original spirit of automated trend discovery.
+- **Original project**: [`ericciarla/trendFinder`](https://github.com/ericciarla/trendFinder) (MIT license)
+- **This fork**: major rewrite — trend consolidation instead of news listing, DeepSeek V3.2, Grok-4 live search, expanded sources, Notion with reasoning.
 
 This project remains under the **MIT license** inherited from the original repository.
-
