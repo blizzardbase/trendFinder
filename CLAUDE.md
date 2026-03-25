@@ -15,9 +15,10 @@ Scrape (Firecrawl + Grok-4) → Consolidate (DeepSeek V3.2 via OpenRouter) → S
 
 ### Pipeline flow
 1. `getCronSources.ts` — returns 22 source URLs
-2. `scrapeSources.ts` — Firecrawl for web/Reddit, Grok-4 Responses API with `x_search` for X profiles (72-hour window)
-3. `generateDraft.ts` — DeepSeek V3.2 identifies cross-source trends (not individual news)
-4. `sendDraft.ts` — writes one Notion row per trend (Title, Description, Reasoning, Sources, Category, Date)
+2. `scrapeSources.ts` — scrapes all sources **in parallel** (Firecrawl for web/Reddit, Grok-4 with `x_search` for X profiles, 72-hour window)
+3. `generateDraft.ts` — DeepSeek V3.2 identifies cross-source trends (not individual news). Category output validated against `TREND_CATEGORIES` in `utils.ts`
+4. `sendDraft.ts` — writes Notion rows **in parallel** (Title, Description, Reasoning, Sources, Category, Date)
+5. `utils.ts` — shared utilities: `stripCodeFences()`, `TREND_CATEGORIES` constant
 
 ### API dependencies
 - **Firecrawl** — web scraping (FIRECRAWL_API_KEY)

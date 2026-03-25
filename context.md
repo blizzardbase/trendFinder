@@ -8,11 +8,13 @@ Run cadence: **once every 3 days.** X profiles use a 72-hour tweet window that a
 
 - **What works**
   - End-to-end: getCronSources → scrapeSources → generateDraft → sendDraft.
-  - **Firecrawl** for web sources + Reddit: 12 URLs (news/blog sites + 2 subreddits) scraped via scrapeUrl with `formats: ["markdown"]`; markdown truncated to 3000 chars per source. Reddit uses old.reddit.com for scraper compatibility. Requires `FIRECRAWL_API_KEY`.
+  - **All 22 sources scraped in parallel** via `Promise.allSettled` for speed.
+  - **Firecrawl** for web sources + Reddit: 12 URLs scraped via scrapeUrl with `formats: ["markdown"]`; markdown truncated to 3000 chars per source. Reddit uses old.reddit.com for scraper compatibility. Requires `FIRECRAWL_API_KEY`.
   - **xAI Grok** for X profiles: 10 accounts fetched via `getTweetsViaGrok()` — Grok Responses API (`/v1/responses`), model `grok-4`, with `x_search` tool for live X access. 72-hour tweet window. Requires `XAI_API_KEY`.
   - Both outputs are combined into one markdown string (sections joined with `---`) and passed to generateDraft.
-  - **DeepSeek V3.2** via OpenRouter receives combined content, identifies consolidated trends across sources (not individual news items), returns JSON with trend_name, description, reasoning, sources, category.
-  - **Notion**: one database row per consolidated trend (Title, Description, Reasoning, Sources, Category, Date).
+  - **DeepSeek V3.2** via OpenRouter identifies consolidated trends. Category output validated against `TREND_CATEGORIES` constant (falls back to "Other" if LLM returns unexpected value).
+  - **Notion**: rows written in parallel via `Promise.all` (Title, Description, Reasoning, Sources, Category, Date).
+  - Shared utilities in `src/utils.ts`: `stripCodeFences()` for LLM JSON parsing, `TREND_CATEGORIES` as single source of truth for category values.
   - Dotenv loaded in `index.ts` before any other app code (dynamic import of cron).
 
 ## Sources (22 total)

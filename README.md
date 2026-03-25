@@ -23,7 +23,7 @@ Unlike a simple news feed, TrendFinder doesn't just list individual stories. It 
   - `@karpathy`, `@ylecun`, `@ilyasut`, `@fchollet`, `@rasbt`
   - `@natolambert`, `@simonw`, `@GoogleResearch`, `@claudeai`, `@theo`
 
-All scraped content is combined into one markdown string for analysis.
+All sources are scraped **in parallel** for speed, then combined into one markdown string for analysis.
 
 ### 2. Trend consolidation (DeepSeek V3.2 via OpenRouter)
 
@@ -31,7 +31,7 @@ The combined content is sent to **DeepSeek V3.2** via OpenRouter. The model:
 - Reads all sources together
 - Identifies **emerging trends** that appear across 2+ sources
 - Provides reasoning and evidence for each trend
-- Categorizes trends (Security, AI Models, Tool Launches, Industry Shifts, Developer Experience, Open Source)
+- Categorizes trends (Security, AI Models, Tool Launches, Industry Shifts, Developer Experience, Open Source) — validated against a fixed list to prevent Notion pollution
 - Aims for 3-7 quality trends per run
 
 ### 3. Notion database
