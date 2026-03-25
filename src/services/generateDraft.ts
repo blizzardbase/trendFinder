@@ -1,8 +1,14 @@
 import OpenAI from "openai";
 import dotenv from "dotenv";
 import type { TrendItem } from "../types";
+import { stripCodeFences, TREND_CATEGORIES } from "../utils";
 
 dotenv.config();
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENROUTER_API_KEY,
+  baseURL: "https://openrouter.ai/api/v1",
+});
 
 export interface GenerateDraftResult {
   draftPost: string;
@@ -23,11 +29,7 @@ export async function generateDraft(
   try {
     const currentDate = new Date().toLocaleDateString();
     const header = `AI Trend Analysis for ${currentDate}\n\n`;
-
-    const openai = new OpenAI({
-      apiKey: process.env.OPENROUTER_API_KEY,
-      baseURL: "https://openrouter.ai/api/v1",
-    });
+    const categoryList = TREND_CATEGORIES.map((c) => `"${c}"`).join(", ");
 
     const messages: Array<{ role: "system" | "user"; content: string }> = [
       {
@@ -39,16 +41,16 @@ export async function generateDraft(
           "2. Identify EMERGING TRENDS or THEMES that appear across multiple sources\n" +
           "3. Only report trends that have evidence from at least 2 different sources\n\n" +
           "For each trend, provide:\n" +
-          "- trend_name: A clear, concise name (e.g. \"Supply Chain Security Attacks on AI Libraries\")\n" +
+          '- trend_name: A clear, concise name (e.g. "Supply Chain Security Attacks on AI Libraries")\n' +
           "- description: What this trend is about and WHY it matters (2-3 sentences)\n" +
           "- reasoning: What specific evidence from the sources led you to identify this as a trend\n" +
           "- sources: Array of the source URLs or profile names that contributed to this trend\n" +
-          '- category: One of "Security", "AI Models", "Tool Launches", "Industry Shifts", "Developer Experience", "Open Source", or "Other"\n\n' +
+          `- category: One of ${categoryList}\n\n` +
           'Return strictly valid JSON: {"trends": [...]}\n\n' +
           "Important rules:\n" +
           "- Minimum 2 sources per trend (that's what makes it a trend, not just news)\n" +
           "- Aim for 3-7 trends per run — quality over quantity\n" +
-          "- Do NOT just repackage individual news items as \"trends\"\n" +
+          '- Do NOT just repackage individual news items as "trends"\n' +
           "- If you genuinely only find 1-2 trends, that's fine — don't pad",
       },
       {
@@ -69,13 +71,17 @@ export async function generateDraft(
     }
     console.log(rawJSON);
 
-    const jsonStr = rawJSON
-      .replace(/```json\n?/g, "")
-      .replace(/```\n?/g, "")
-      .trim();
-    const parsedResponse = JSON.parse(jsonStr);
+    const parsedResponse = JSON.parse(stripCodeFences(rawJSON));
 
-    const contentArray: TrendItem[] = parsedResponse.trends || [];
+    const contentArray: TrendItem[] = (parsedResponse.trends || []).map(
+      (item: TrendItem) => ({
+        ...item,
+        category: TREND_CATEGORIES.includes(item.category as any)
+          ? item.category
+          : "Other",
+      }),
+    );
+
     if (contentArray.length === 0) {
       return {
         draftPost: header + "No consolidated trends found at this time.",

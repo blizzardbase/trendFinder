@@ -1,3 +1,5 @@
+import type { TrendCategory } from "./utils";
+
 /**
  * A consolidated trend identified across multiple sources, used for Notion database rows.
  */
@@ -6,5 +8,5 @@ export interface TrendItem {
   description: string;
   reasoning: string;
   sources: string[];
-  category?: string;
+  category?: TrendCategory;
 }

@@ -34,7 +34,7 @@ export async function sendDraft(items: TrendItem[]): Promise<string> {
 
   const dateValue = new Date().toISOString().slice(0, 10);
 
-  for (const item of items) {
+  await Promise.all(items.map((item) => {
     const title = truncateForNotion(item.trend_name, 2000);
     const description = truncateForNotion(item.description);
     const reasoning = truncateForNotion(item.reasoning);
@@ -43,7 +43,7 @@ export async function sendDraft(items: TrendItem[]): Promise<string> {
     );
     const category = item.category ? truncateForNotion(item.category, 100) : undefined;
 
-    await notion.pages.create({
+    return notion.pages.create({
       parent: { database_id: databaseId },
       properties: {
         Title: {
@@ -66,7 +66,7 @@ export async function sendDraft(items: TrendItem[]): Promise<string> {
           : {}),
       } as Parameters<typeof notion.pages.create>[0]["properties"],
     });
-  }
+  }));
 
   return `Success writing ${items.length} trend(s) to Notion at ${new Date().toISOString()}`;
 }
