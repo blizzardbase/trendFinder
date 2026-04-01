@@ -13,7 +13,7 @@ Run cadence: **once every 3 days.** X profiles use a 72-hour tweet window that a
   - **xAI Grok** for X profiles: 31 accounts fetched via `getTweetsViaGrok()` — Grok Responses API (`/v1/responses`), model `grok-4`, with `x_search` tool for live X access. 72-hour tweet window. Requires `XAI_API_KEY`.
   - Both outputs are combined into one markdown string (sections joined with `---`) and passed to generateDraft.
   - **DeepSeek V3.2** via OpenRouter identifies consolidated trends. Category output validated against `TREND_CATEGORIES` constant (falls back to "Other" if LLM returns unexpected value).
-  - **Notion**: rows written in parallel via `Promise.all` (Title, Description, Reasoning, Sources, Category, Date).
+  - **Notion**: rows written in parallel via `Promise.allSettled` (Title, Description, Reasoning, Sources, Category, Date). Partial success is reported if some writes fail.
   - Shared utilities in `src/utils.ts`: `stripCodeFences()` for LLM JSON parsing, `TREND_CATEGORIES` as single source of truth for category values.
   - Dotenv loaded in `index.ts` before any other app code (dynamic import of cron).
 
@@ -58,6 +58,14 @@ Run cadence: **once every 3 days.** X profiles use a 72-hour tweet window that a
 - **Notion** — structured trend rows (Title, Description, Reasoning, Sources, Category, Date).
 - **Firecrawl** — fetch markdown for web URLs, Reddit, podcasts, and blogs.
 - **3-day cadence** — web sources need 2-3 days to accumulate fresh content; 72-hour tweet window matches.
+
+## Reliability fixes (2026-04-02)
+
+- **Stale dates fixed**: `today`/`threeDaysAgo` now computed inside `getTweetsViaGrok()` per call, not at module load.
+- **LLM parse failure handling**: `generateDraft` now catches JSON parse errors separately with explicit logging and raw output dump, instead of silently returning empty items.
+- **Lazy Firecrawl init**: `FirecrawlApp` is only instantiated when `FIRECRAWL_API_KEY` exists, preventing module-level crash that would also kill Grok scraping.
+- **Empty source guard**: `handleCron` exits early if `getCronSources` returns 0 sources, avoiding wasted OpenRouter API calls.
+- **Partial Notion writes**: `sendDraft` uses `Promise.allSettled` instead of `Promise.all`, reporting how many succeeded/failed instead of losing all results on a single failure.
 
 ## Limitations / open questions
 

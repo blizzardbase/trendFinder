@@ -1,6 +1,6 @@
 # TrendFinder
 
-Automated AI trend aggregator that scrapes 22 sources, identifies consolidated trends using DeepSeek V3.2, and writes them to Notion.
+Automated AI trend aggregator that scrapes 51 sources, identifies consolidated trends using DeepSeek V3.2, and writes them to Notion.
 
 ## Quick Reference
 
@@ -14,10 +14,10 @@ Automated AI trend aggregator that scrapes 22 sources, identifies consolidated t
 Scrape (Firecrawl + Grok-4) → Consolidate (DeepSeek V3.2 via OpenRouter) → Save (Notion)
 
 ### Pipeline flow
-1. `getCronSources.ts` — returns 22 source URLs
-2. `scrapeSources.ts` — scrapes all sources **in parallel** (Firecrawl for web/Reddit, Grok-4 with `x_search` for X profiles, 72-hour window)
-3. `generateDraft.ts` — DeepSeek V3.2 identifies cross-source trends (not individual news). Category output validated against `TREND_CATEGORIES` in `utils.ts`
-4. `sendDraft.ts` — writes Notion rows **in parallel** (Title, Description, Reasoning, Sources, Category, Date)
+1. `getCronSources.ts` — returns 51 source URLs (20 Firecrawl + 31 X profiles)
+2. `scrapeSources.ts` — scrapes all sources **in parallel** (Firecrawl for web/Reddit/podcasts/blogs, Grok-4 with `x_search` for X profiles, 72-hour window). Lazy Firecrawl init; fresh dates per call.
+3. `generateDraft.ts` — DeepSeek V3.2 identifies cross-source trends (not individual news). Category output validated against `TREND_CATEGORIES` in `utils.ts`. Explicit error logging on JSON parse failure.
+4. `sendDraft.ts` — writes Notion rows **in parallel** via `Promise.allSettled` with partial success reporting (Title, Description, Reasoning, Sources, Category, Date)
 5. `utils.ts` — shared utilities: `stripCodeFences()`, `TREND_CATEGORIES` constant
 
 ### API dependencies
@@ -26,11 +26,13 @@ Scrape (Firecrawl + Grok-4) → Consolidate (DeepSeek V3.2 via OpenRouter) → S
 - **OpenRouter** — LLM for trend analysis (OPENROUTER_API_KEY)
 - **Notion** — storage (NOTION_API_KEY + NOTION_DATABASE_ID)
 
-## Sources (22)
+## Sources (51)
 
 - **Web (10)**: firecrawl.dev, openai.com, anthropic.com (news + research), HN, Reuters AI, simonwillison.net, buttondown AI news, deepmind.google, ai.meta.com
 - **Reddit (2)**: r/MachineLearning, r/LocalLLaMA (via old.reddit.com)
-- **X (10)**: @karpathy, @ylecun, @ilyasut, @fchollet, @rasbt, @natolambert, @simonw, @GoogleResearch, @claudeai, @theo
+- **Podcasts (6)**: Latent Space, Training Data, No Priors, Unsupervised Learning, MAD Podcast, AI & I by Every
+- **Blogs (2)**: Anthropic Engineering, Claude Blog
+- **X (31)**: @karpathy, @ylecun, @ilyasut, @fchollet, @rasbt, @natolambert, @simonw, @GoogleResearch, @claudeai, @theo, @swyx, @joshwoodward, @kevinweil, @petergyang, @thenanyu, @realmadhuguru, @AmandaAskell, @_catwu, @trq212, @amasad, @rauchg, @alexalbert__, @levie, @ryolu_, @garrytan, @mattturck, @zarazhangrui, @nikunj, @steipete, @danshipper, @adityaag, @sama
 
 ## Important Notes
 
