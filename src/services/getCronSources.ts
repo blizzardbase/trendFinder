@@ -29,6 +29,16 @@ export async function getCronSources(): Promise<{ identifier: string }[]> {
           { identifier: "https://ai.meta.com/blog" },
           { identifier: "https://old.reddit.com/r/MachineLearning/" },
           { identifier: "https://old.reddit.com/r/LocalLLaMA/" },
+          // Podcasts
+          { identifier: "https://www.latent.space/" },
+          { identifier: "https://www.sequoiacap.com/trainingdata/" },
+          { identifier: "https://www.no-priors.com/" },
+          { identifier: "https://danielmiessler.com/podcast" },
+          { identifier: "https://www.mattturck.com/podcast" },
+          { identifier: "https://every.to/podcast" },
+          // Official blogs
+          { identifier: "https://www.anthropic.com/engineering" },
+          { identifier: "https://claude.com/blog" },
         ]
       : [];
 
@@ -44,6 +54,28 @@ export async function getCronSources(): Promise<{ identifier: string }[]> {
           { identifier: "https://x.com/GoogleResearch" },
           { identifier: "https://x.com/claudeai" },
           { identifier: "https://x.com/theo" },
+          { identifier: "https://x.com/swyx" },
+          { identifier: "https://x.com/joshwoodward" },
+          { identifier: "https://x.com/kevinweil" },
+          { identifier: "https://x.com/petergyang" },
+          { identifier: "https://x.com/thenanyu" },
+          { identifier: "https://x.com/realmadhuguru" },
+          { identifier: "https://x.com/AmandaAskell" },
+          { identifier: "https://x.com/_catwu" },
+          { identifier: "https://x.com/trq212" },
+          { identifier: "https://x.com/amasad" },
+          { identifier: "https://x.com/rauchg" },
+          { identifier: "https://x.com/alexalbert__" },
+          { identifier: "https://x.com/levie" },
+          { identifier: "https://x.com/ryolu_" },
+          { identifier: "https://x.com/garrytan" },
+          { identifier: "https://x.com/mattturck" },
+          { identifier: "https://x.com/zarazhangrui" },
+          { identifier: "https://x.com/nikunj" },
+          { identifier: "https://x.com/steipete" },
+          { identifier: "https://x.com/danshipper" },
+          { identifier: "https://x.com/adityaag" },
+          { identifier: "https://x.com/sama" },
         ]
       : [];
 
