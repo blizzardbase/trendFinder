@@ -71,7 +71,14 @@ export async function generateDraft(
     }
     console.log(rawJSON);
 
-    const parsedResponse = JSON.parse(stripCodeFences(rawJSON));
+    let parsedResponse: { trends?: TrendItem[] };
+    try {
+      parsedResponse = JSON.parse(stripCodeFences(rawJSON));
+    } catch (parseErr) {
+      console.error("[generateDraft] FAILED TO PARSE LLM JSON OUTPUT. Raw output saved below:");
+      console.error(rawJSON);
+      return { draftPost: header + "Error: LLM returned unparseable JSON.", items: [] };
+    }
 
     const contentArray: TrendItem[] = (parsedResponse.trends || []).map(
       (item: TrendItem) => ({

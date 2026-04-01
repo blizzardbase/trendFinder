@@ -34,7 +34,7 @@ export async function sendDraft(items: TrendItem[]): Promise<string> {
 
   const dateValue = new Date().toISOString().slice(0, 10);
 
-  await Promise.all(items.map((item) => {
+  const results = await Promise.allSettled(items.map((item) => {
     const title = truncateForNotion(item.trend_name, 2000);
     const description = truncateForNotion(item.description);
     const reasoning = truncateForNotion(item.reasoning);
@@ -68,5 +68,12 @@ export async function sendDraft(items: TrendItem[]): Promise<string> {
     });
   }));
 
-  return `Success writing ${items.length} trend(s) to Notion at ${new Date().toISOString()}`;
+  const succeeded = results.filter(r => r.status === "fulfilled").length;
+  const failed = results.filter(r => r.status === "rejected").length;
+  if (failed > 0) {
+    const errors = results.filter(r => r.status === "rejected") as PromiseRejectedResult[];
+    errors.forEach(r => console.error("[sendDraft] Notion write failed:", r.reason));
+  }
+
+  return `Wrote ${succeeded}/${items.length} trend(s) to Notion at ${new Date().toISOString()}${failed > 0 ? ` (${failed} failed)` : ""}`;
 }

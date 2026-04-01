@@ -6,11 +6,15 @@ dotenv.config();
 
 const firecrawlApiKey = process.env.FIRECRAWL_API_KEY;
 const xaiApiKey = process.env.XAI_API_KEY;
-const app = new FirecrawlApp({ apiKey: firecrawlApiKey });
+
+let firecrawlApp: FirecrawlApp | null = null;
+function getFirecrawlApp(): FirecrawlApp | null {
+  if (!firecrawlApiKey) return null;
+  if (!firecrawlApp) firecrawlApp = new FirecrawlApp({ apiKey: firecrawlApiKey });
+  return firecrawlApp;
+}
 
 const MARKDOWN_TRUNCATE_LENGTH = 3000;
-const today = new Date().toISOString().split("T")[0];
-const threeDaysAgo = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString().split("T")[0];
 
 type GrokTweet = { text?: string; link?: string; username?: string };
 
@@ -23,6 +27,9 @@ async function getTweetsViaGrok(username: string): Promise<string> {
     console.error(`Skipping @${username}: XAI_API_KEY not set.`);
     return "";
   }
+
+  const today = new Date().toISOString().split("T")[0];
+  const threeDaysAgo = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString().split("T")[0];
 
   const prompt = `List the most recent tweets from @${username} about AI, tech, or coding from the last 72 hours. For each tweet, provide the text and a direct link to the tweet. Return as JSON with format: {"tweets": [{"text": "...", "link": "https://x.com/...", "username": "${username}"}]}. If there are no matching tweets, return {"tweets": []}. Return only valid JSON, no markdown or extra text.`;
 
@@ -98,7 +105,8 @@ async function getTweetsViaGrok(username: string): Promise<string> {
  * Scrape a single web/Reddit source via Firecrawl.
  */
 async function scrapeWebSource(source: string): Promise<string> {
-  if (!firecrawlApiKey) {
+  const app = getFirecrawlApp();
+  if (!app) {
     console.error(`Skipping ${source}: FIRECRAWL_API_KEY not set.`);
     return "";
   }
